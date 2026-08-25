@@ -1,30 +1,32 @@
 def calculate_risk(
     predicted_score,
     attendance,
-    internal_marks,
-    assignment_marks,
-    previous_marks
+    internal_test_1,
+    internal_test_2,
+    assignment_score,
+    study_hours
 ):
     """
-    Calculate student's academic risk.
+    Calculate student's academic risk using the ML prediction
+    and the same academic factors used by the ML model.
 
     Returns:
         {
             "risk_level": "HIGH/MEDIUM/LOW",
-            "risk_score": int,
-            "reasons": list
+            "risk_reasons": list
         }
     """
 
-    # Validate inputs
     values = {
         "predicted_score": predicted_score,
         "attendance": attendance,
-        "internal_marks": internal_marks,
-        "assignment_marks": assignment_marks,
-        "previous_marks": previous_marks
+        "internal_test_1": internal_test_1,
+        "internal_test_2": internal_test_2,
+        "assignment_score": assignment_score,
+        "study_hours": study_hours
     }
 
+    # Validate input types
     for name, value in values.items():
         if value is None:
             raise ValueError(f"{name} cannot be None")
@@ -32,81 +34,59 @@ def calculate_risk(
         if not isinstance(value, (int, float)):
             raise ValueError(f"{name} must be a number")
 
+    # Validate ranges
     if not 0 <= predicted_score <= 100:
         raise ValueError("predicted_score must be between 0 and 100")
 
     if not 0 <= attendance <= 100:
         raise ValueError("attendance must be between 0 and 100")
 
-    if not 0 <= internal_marks <= 100:
-        raise ValueError("internal_marks must be between 0 and 100")
+    if not 0 <= internal_test_1 <= 40:
+        raise ValueError("internal_test_1 must be between 0 and 40")
 
-    if not 0 <= assignment_marks <= 100:
-        raise ValueError("assignment_marks must be between 0 and 100")
+    if not 0 <= internal_test_2 <= 40:
+        raise ValueError("internal_test_2 must be between 0 and 40")
 
-    if not 0 <= previous_marks <= 100:
-        raise ValueError("previous_marks must be between 0 and 100")
+    if not 0 <= assignment_score <= 10:
+        raise ValueError("assignment_score must be between 0 and 10")
 
-    risk_score = 0
+    if study_hours < 0:
+        raise ValueError("study_hours cannot be negative")
+
     reasons = []
 
-    # Predicted score
-    if predicted_score < 50:
-        risk_score += 3
-        reasons.append("Predicted score is below 50")
-
-    elif predicted_score < 65:
-        risk_score += 2
-        reasons.append("Predicted score is below 65")
-
     # Attendance
-    if attendance < 60:
-        risk_score += 3
-        reasons.append("Attendance is critically low")
+    if attendance < 75:
+        reasons.append("Low attendance")
 
-    elif attendance < 75:
-        risk_score += 2
-        reasons.append("Attendance is below 75%")
+    # Internal tests
+    if internal_test_1 < 20:
+        reasons.append("Low Internal Test 1 performance")
 
-    # Internal marks
-    if internal_marks < 40:
-        risk_score += 2
-        reasons.append("Internal marks are low")
+    if internal_test_2 < 20:
+        reasons.append("Low Internal Test 2 performance")
 
-    # Assignment marks
-    if assignment_marks < 40:
-        risk_score += 1
-        reasons.append("Assignment performance is low")
+    # Assignment
+    if assignment_score < 5:
+        reasons.append("Low assignment performance")
 
-    # Previous performance
-    if previous_marks < 50:
-        risk_score += 2
-        reasons.append("Previous academic performance is weak")
+    # Study hours
+    if study_hours < 2:
+        reasons.append("Low daily study hours")
 
-    # Final risk
-    if risk_score >= 6:
+    # Predicted final score determines risk level
+    if predicted_score < 50:
         risk_level = "HIGH"
-
-    elif risk_score >= 3:
+    elif predicted_score < 65:
         risk_level = "MEDIUM"
-
     else:
         risk_level = "LOW"
 
+    # No reasons
+    if not reasons:
+        reasons.append("No major risk factors detected")
+
     return {
         "risk_level": risk_level,
-        "risk_score": risk_score,
-        "reasons": reasons
+        "risk_reasons": reasons
     }
-    
-    from backend.risk_engine import calculate_risk
-
-result = calculate_risk(
-    predicted_score=45,
-    attendance=55,
-    internal_marks=35,
-    assignment_marks=50,
-    previous_marks=42
-)
-
-print(result)

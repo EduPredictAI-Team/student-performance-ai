@@ -1,73 +1,51 @@
-def generate_recommendations(risk_level, reasons):
+def generate_recommendations(
+    predicted_score,
+    attendance,
+    internal_test_1,
+    internal_test_2,
+    assignment_score,
+    study_hours
+):
     """
-    Generate recommendations based on student's risk level
-    and identified risk reasons.
+    Generate academic recommendations using the same
+    inputs used by the ML model and risk engine.
     """
 
     recommendations = []
 
-    if risk_level == "HIGH":
+    if attendance < 75:
         recommendations.append(
-            "Meet the faculty or academic mentor as soon as possible."
-        )
-        recommendations.append(
-            "Create a daily study plan and prioritize weak subjects."
+            "Improve class attendance."
         )
 
-    elif risk_level == "MEDIUM":
+    if internal_test_1 < 20:
         recommendations.append(
-            "Increase weekly study time and monitor academic progress."
-        )
-        recommendations.append(
-            "Focus on subjects where performance is below average."
+            "Focus more on Internal Test 1 topics."
         )
 
-    elif risk_level == "LOW":
+    if internal_test_2 < 20:
         recommendations.append(
-            "Maintain your current study routine and academic performance."
+            "Focus more on Internal Test 2 topics."
         )
 
-    else:
-        raise ValueError("Invalid risk level")
+    if assignment_score < 5:
+        recommendations.append(
+            "Complete assignments regularly."
+        )
 
-    for reason in reasons:
+    if study_hours < 2:
+        recommendations.append(
+            "Increase daily study consistency."
+        )
 
-        if "Attendance" in reason:
-            recommendations.append(
-                "Improve class attendance and avoid unnecessary absences."
-            )
+    if predicted_score < 50:
+        recommendations.append(
+            "Consider speaking with the faculty advisor for academic support."
+        )
 
-        elif "Internal marks" in reason:
-            recommendations.append(
-                "Practice more for internal examinations and class tests."
-            )
+    if not recommendations:
+        recommendations.append(
+            "Maintain your current study habits and performance."
+        )
 
-        elif "Assignment" in reason:
-            recommendations.append(
-                "Complete assignments on time and improve assignment quality."
-            )
-
-        elif "Previous academic performance" in reason:
-            recommendations.append(
-                "Review previous weak topics and revise them regularly."
-            )
-
-        elif "Predicted score" in reason:
-            recommendations.append(
-                "Increase revision and practice previous examination questions."
-            )
-
-    return list(dict.fromkeys(recommendations))
-
-from backend.recommendations import generate_recommendations
-
-result = generate_recommendations(
-    "HIGH",
-    [
-        "Predicted score is below 50",
-        "Attendance is critically low",
-        "Internal marks are low"
-    ]
-)
-
-print(result)
+    return recommendations
