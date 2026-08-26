@@ -3,8 +3,8 @@ numpy
 scikit-learn
 xgboost
 joblib
-fastapi
-uvicorn
-sqlalchemy
-pymysql
-python-dotenv
+matplotlib
+fastapi==0.141.1
+uvicorn==0.52.4
+mysql-connector-python==26.7.0
+httpx2==2.12.0
