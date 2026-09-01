@@ -3,86 +3,107 @@ from pydantic import BaseModel
 import mysql.connector
 import joblib
 import pandas as pd
+import os
+from dotenv import load_dotenv
+
+# Load .env
+load_dotenv()
 
 from ml.real_risk_engine import calculate_risk
 from ml.real_recommendations import generate_recommendations
 
 
-# =========================================================
-# FASTAPI
-# =========================================================
+# ============================================================
+# FASTAPI APP
+# ============================================================
 
 app = FastAPI(
-    title="Student Performance Prediction API"
+    title="Student Performance Prediction API",
+    description="API for predicting student performance and identifying academic risk.",
+    version="1.0.0"
 )
 
 
-# =========================================================
-# LOAD REAL-DATA ML MODEL
-# =========================================================
-
-model = joblib.load("ml/real_student_model.pkl")
-
-print("Jeet's real ML model loaded successfully!")
-
-
-# =========================================================
-# MYSQL CONNECTION
-# =========================================================
+# ============================================================
+# DATABASE CONNECTION
+# ============================================================
 
 def get_db():
-
     return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="YOUR_MYSQL_PASSWORD_HERE",
-        database="student_performance"
+        host=os.getenv("MYSQLHOST", "localhost"),
+        port=int(os.getenv("MYSQLPORT", "3306")),
+        user=os.getenv("MYSQLUSER", "root"),
+        password=os.getenv("MYSQLPASSWORD"),
+        database=os.getenv("MYSQLDATABASE", "student_performance")
     )
 
 
-# =========================================================
-# STUDENT INPUT
-# =========================================================
+# ============================================================
+# LOAD ML MODEL
+# ============================================================
 
-class StudentData(BaseModel):
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(
+    BASE_DIR,
+    "ml",
+    "real_student_model.pkl"
+)
 
+try:
+    model = joblib.load(MODEL_PATH)
+
+    print("Real ML model loaded successfully!")
+
+    # Show the features expected by the trained model
+    if hasattr(model, "feature_names_in_"):
+        print("Model expects features:")
+        print(model.feature_names_in_)
+
+except Exception as e:
+    model = None
+    print(f"Error loading ML model: {e}")
+
+
+# ============================================================
+# REQUEST MODEL
+# ============================================================
+
+class PredictionRequest(BaseModel):
     student_id: int
-
     attendance: float
-
     internal_test_1: float
-
     internal_test_2: float
-
     assignment_score: float
-
     study_hours: float
 
 
-# =========================================================
-# HOME API
-# =========================================================
+# ============================================================
+# ROOT ENDPOINT
+# ============================================================
 
 @app.get("/")
 def home():
-
     return {
-        "message": "Student Performance API is working!"
+        "message": "Student Performance API is working!",
+        "docs": "/docs",
+        "students_endpoint": "/students",
+        "prediction_endpoint": "/predict"
     }
 
 
-# =========================================================
+# ============================================================
 # GET STUDENTS
-# =========================================================
+# ============================================================
 
 @app.get("/students")
 def get_students():
 
-    db = get_db()
-
-    cursor = db.cursor(dictionary=True)
+    db = None
+    cursor = None
 
     try:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
 
         cursor.execute(
             "SELECT * FROM students"
@@ -92,164 +113,178 @@ def get_students():
 
         return students
 
+    except mysql.connector.Error as e:
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database error: {str(e)}"
+        )
+
     finally:
 
-        cursor.close()
-        db.close()
+        if cursor:
+            cursor.close()
+
+        if db:
+            db.close()
 
 
-# =========================================================
-# PREDICTION API
-# =========================================================
+# ============================================================
+# PREDICT STUDENT PERFORMANCE
+# ============================================================
 
 @app.post("/predict")
-def predict(student: StudentData):
+def predict_performance(data: PredictionRequest):
 
     db = None
     cursor = None
 
     try:
 
-        # =====================================================
-        # 1. CONNECT TO MYSQL
-        # =====================================================
+        # --------------------------------------------------------
+        # 1. CHECK ML MODEL
+        # --------------------------------------------------------
+
+        if model is None:
+            raise HTTPException(
+                status_code=500,
+                detail="ML model could not be loaded."
+            )
+
+        # --------------------------------------------------------
+        # 2. CONNECT TO DATABASE
+        # --------------------------------------------------------
 
         db = get_db()
-
         cursor = db.cursor(dictionary=True)
 
-
-        # =====================================================
-        # 2. CHECK STUDENT EXISTS
-        # =====================================================
+        # --------------------------------------------------------
+        # 3. GET STUDENT
+        # --------------------------------------------------------
 
         cursor.execute(
             "SELECT id, name FROM students WHERE id = %s",
-            (student.student_id,)
+            (data.student_id,)
         )
 
-        existing_student = cursor.fetchone()
+        student = cursor.fetchone()
 
-        if existing_student is None:
-
+        if not student:
             raise HTTPException(
                 status_code=404,
-                detail=f"Student ID {student.student_id} not found"
+                detail=f"Student with ID {data.student_id} not found."
             )
 
+        # --------------------------------------------------------
+        # 4. CREATE ML INPUT
+        # IMPORTANT:
+        # These column names MUST match the trained model.
+        # --------------------------------------------------------
 
-        # =====================================================
-        # 3. CREATE ML INPUT
-        # =====================================================
-
-        input_data = pd.DataFrame([{
-
-            "Attendance (%)":
-                student.attendance,
-
-            "Internal Test 1 (out of 40)":
-                student.internal_test_1,
-
-            "Internal Test 2 (out of 40)":
-                student.internal_test_2,
-
-            "Assignment Score (out of 10)":
-                student.assignment_score,
-
-            "Daily Study Hours":
-                student.study_hours
-
-        }])
-
-
-        # =====================================================
-        # 4. ML PREDICTION
-        # =====================================================
-
-        prediction = model.predict(input_data)[0]
-
-        prediction = round(float(prediction), 2)
-
-
-        # =====================================================
-        # 5. RISK CALCULATION
-        # =====================================================
-
-        risk_data = calculate_risk(
-
-            predicted_score=prediction,
-
-            attendance=student.attendance,
-
-            internal_test_1=student.internal_test_1,
-
-            internal_test_2=student.internal_test_2,
-
-            assignment_score=student.assignment_score,
-
-            study_hours=student.study_hours
-
+        input_data = pd.DataFrame(
+            [[
+                data.attendance,
+                data.internal_test_1,
+                data.internal_test_2,
+                data.assignment_score,
+                data.study_hours
+            ]],
+            columns=[
+                "Attendance (%)",
+                "Internal Test 1 (out of 40)",
+                "Internal Test 2 (out of 40)",
+                "Assignment Score (out of 10)",
+                "Daily Study Hours"
+            ]
         )
 
-        risk_level = risk_data["risk_level"]
+        # --------------------------------------------------------
+        # 5. ML PREDICTION
+        # --------------------------------------------------------
 
-        risk_reasons = risk_data["risk_reasons"]
+        prediction = model.predict(input_data)
 
+        predicted_score = float(prediction[0])
 
-        # =====================================================
-        # 6. RECOMMENDATIONS
-        # =====================================================
+        # Keep score inside normal academic range
+        predicted_score = max(
+            0.0,
+            min(100.0, predicted_score)
+        )
+
+        predicted_score = round(
+            predicted_score,
+            2
+        )
+
+        # --------------------------------------------------------
+        # 6. CALCULATE RISK
+        # IMPORTANT:
+        # predicted_score is required by calculate_risk()
+        # --------------------------------------------------------
+
+        risk_result = calculate_risk(
+            attendance=data.attendance,
+            internal_test_1=data.internal_test_1,
+            internal_test_2=data.internal_test_2,
+            assignment_score=data.assignment_score,
+            study_hours=data.study_hours,
+            predicted_score=predicted_score
+        )
+
+        # --------------------------------------------------------
+        # 7. EXTRACT RISK INFORMATION
+        # --------------------------------------------------------
+
+        if isinstance(risk_result, dict):
+
+            risk_level = risk_result.get(
+                "risk_level",
+                "LOW"
+            )
+
+            risk_reasons = risk_result.get(
+                "risk_reasons",
+                []
+            )
+
+        else:
+
+            risk_level = str(
+                risk_result
+            )
+
+            risk_reasons = []
+
+        # --------------------------------------------------------
+        # 8. GENERATE RECOMMENDATIONS
+        # --------------------------------------------------------
 
         recommendations = generate_recommendations(
-
-            predicted_score=prediction,
-
-            attendance=student.attendance,
-
-            internal_test_1=student.internal_test_1,
-
-            internal_test_2=student.internal_test_2,
-
-            assignment_score=student.assignment_score,
-
-            study_hours=student.study_hours
-
+            attendance=data.attendance,
+            internal_test_1=data.internal_test_1,
+            internal_test_2=data.internal_test_2,
+            assignment_score=data.assignment_score,
+            study_hours=data.study_hours,
+            predicted_score=predicted_score
         )
 
-
-        # =====================================================
-        # 7. CONVERT LISTS TO TEXT FOR MYSQL
-        # =====================================================
-
-        risk_reasons_text = ", ".join(
-            risk_reasons
-        )
-
-        recommendations_text = " ".join(
-            recommendations
-        )
-
-
-        # =====================================================
-        # 8. SAVE PREDICTION TO MYSQL
-        # =====================================================
+        # --------------------------------------------------------
+        # 9. SAVE PERFORMANCE TO MYSQL
+        # --------------------------------------------------------
 
         insert_query = """
-
             INSERT INTO performance
             (
                 student_id,
                 attendance,
-                assignment_marks,
-                study_hours,
                 internal_test_1,
                 internal_test_2,
+                assignment_score,
+                study_hours,
                 predicted_score,
-                risk_level,
-                risk_reasons,
-                recommendations
+                risk_level
             )
-
             VALUES
             (
                 %s,
@@ -259,124 +294,75 @@ def predict(student: StudentData):
                 %s,
                 %s,
                 %s,
-                %s,
-                %s,
                 %s
             )
-
         """
-
-
-        values = (
-
-            student.student_id,
-
-            student.attendance,
-
-            student.assignment_score,
-
-            student.study_hours,
-
-            student.internal_test_1,
-
-            student.internal_test_2,
-
-            prediction,
-
-            risk_level,
-
-            risk_reasons_text,
-
-            recommendations_text
-
-        )
-
 
         cursor.execute(
             insert_query,
-            values
+            (
+                data.student_id,
+                data.attendance,
+                data.internal_test_1,
+                data.internal_test_2,
+                data.assignment_score,
+                data.study_hours,
+                predicted_score,
+                risk_level
+            )
         )
 
         db.commit()
 
-
-        # =====================================================
-        # 9. GET INSERTED RECORD ID
-        # =====================================================
+        # --------------------------------------------------------
+        # 10. GET INSERTED RECORD ID
+        # --------------------------------------------------------
 
         performance_id = cursor.lastrowid
 
-
-        # =====================================================
-        # 10. RETURN RESULT
-        # =====================================================
+        # --------------------------------------------------------
+        # 11. RETURN RESPONSE
+        # --------------------------------------------------------
 
         return {
-
             "success": True,
-
-            "student_id":
-                student.student_id,
-
-            "student_name":
-                existing_student["name"],
-
-            "performance_id":
-                performance_id,
-
-            "predicted_score":
-                prediction,
-
-            "risk_level":
-                risk_level,
-
-            "risk_reasons":
-                risk_reasons,
-
-            "recommendations":
-                recommendations,
-
-            "message":
-                "Prediction saved successfully to MySQL"
-
+            "student_id": data.student_id,
+            "student_name": student["name"],
+            "performance_id": performance_id,
+            "predicted_score": predicted_score,
+            "risk_level": risk_level,
+            "risk_reasons": risk_reasons,
+            "recommendations": recommendations,
+            "message": "Prediction saved successfully to MySQL"
         }
 
-
-    # =========================================================
-    # HTTP ERROR
-    # =========================================================
-
     except HTTPException:
-
         raise
 
+    except mysql.connector.Error as e:
 
-    # =========================================================
-    # OTHER ERROR
-    # =========================================================
-
-    except Exception as e:
-
-        if db is not None:
-
+        if db:
             db.rollback()
 
         raise HTTPException(
             status_code=500,
-            detail=str(e)
+            detail=f"MySQL error: {str(e)}"
         )
 
+    except Exception as e:
 
-    # =========================================================
-    # CLOSE MYSQL
-    # =========================================================
+        if db:
+            db.rollback()
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"Prediction error: {str(e)}"
+        )
 
     finally:
 
-        if cursor is not None:
-
+        if cursor:
             cursor.close()
 
-        if db is not None:
-
+        if db:
             db.close()

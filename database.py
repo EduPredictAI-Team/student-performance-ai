@@ -1,29 +1,35 @@
+import os
 import mysql.connector
+from dotenv import load_dotenv
 
-# Connect to MySQL
-db = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    password="YOUR_MYSQL_PASSWORD_HERE",
-    database="student_performance"
-)
+load_dotenv()
 
-print("MySQL connected successfully!")
 
-# Create cursor
-cursor = db.cursor()
+def get_db():
+    return mysql.connector.connect(
+        host=os.getenv("MYSQLHOST", "localhost"),
+        port=int(os.getenv("MYSQLPORT", "3306")),
+        user=os.getenv("MYSQLUSER", "root"),
+        password=os.getenv("MYSQLPASSWORD"),
+        database=os.getenv("MYSQLDATABASE", "student_performance")
+    )
 
-# Get students from database
-cursor.execute("SELECT * FROM students")
 
-students = cursor.fetchall()
+if __name__ == "__main__":
+    db = get_db()
 
-# Display students
-print("Students from MySQL:")
+    print("MySQL connected successfully!")
 
-for student in students:
-    print(student)
+    cursor = db.cursor()
 
-# Close connection
-cursor.close()
-db.close()
+    cursor.execute("SELECT * FROM students")
+
+    students = cursor.fetchall()
+
+    print("Students from MySQL:")
+
+    for student in students:
+        print(student)
+
+    cursor.close()
+    db.close()
