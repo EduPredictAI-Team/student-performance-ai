@@ -1,24 +1,46 @@
-# Python virtual environment
+# Python
 venv/
-
-# Python cache
 __pycache__/
-*/__pycache__/
-
-# Python compiled files
 *.pyc
-*.pyo
 
-# Jupyter Notebook checkpoints
-.ipynb_checkpoints/
+# Environment / secrets
+.env
 
-# VS Code settings
+# MySQL Workbench / MySQL installation
+*.dll
+*.exe
+*.ico
+*.pyd
+*.vbs
+*.wbp
+*.wbm
+*.wr.dll
+
+mysql-26.7.0-winx64/
+workbench/
+modules/
+extras/
+images/
+python/
+sys/
+swb/
+structs/
+script_templates/
+snippets/
+mysql.profiles/
+
+# MySQL temporary/system files
+*.log
+*.tmp
+
+# IDE
 .vscode/
 
-# OS files
-.DS_Store
+# OS
 Thumbs.db
+.DS_Store
 
+<<<<<<< HEAD
 # Old synthetic-data backup
 old_synthetic_backup/
 # Logs
@@ -50,3 +72,33 @@ dist/
 .env
 .env.local
  
+=======
+# MySQL Workbench Python/support files
+cairo.py
+grt_python_debugger.py
+mforms.py
+mysqlwbmeb.py
+shell_snippets.py.txt
+sshtunnel.py
+wb.py
+wbadminhelper.py
+MySQLWorkbench.exe.config
+WBControls.dll.config
+
+# Local archives and backups
+*.zip
+
+# Local database files
+*.db
+
+# MySQL Workbench project/data files
+*.xml
+
+# Local training/demo data
+Dataof student*.csv
+student_training_data.csv
+
+# Local backup/project folders
+Git/
+student-performance-backend-integration/
+>>>>>>> origin/subhomoy-backend
