@@ -1,80 +1,82 @@
-# MySQL Workbench
+# 🎓 Student Performance Prediction & Early Warning System
 
+<p align="center">
+  <img src="https://img.shields.io/badge/AI%20%2F%20ML-Student%20Performance-blue?style=for-the-badge" alt="AI/ML"/>
+  <img src="https://img.shields.io/badge/Python-FastAPI-green?style=for-the-badge&logo=python&logoColor=white" alt="Python"/>
+  <img src="https://img.shields.io/badge/React-Vite-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React"/>
+  <img src="https://img.shields.io/badge/MySQL-Database-orange?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL"/>
+</p>
 
+<p align="center">
+  <strong>🤖 An AI-powered system for predicting student academic performance and identifying students who may be at academic risk.</strong>
+</p>
 
-Copyright (c) 2007, 2026, Oracle and/or its affiliates.
+<p align="center">
+  <a href="#-features">Features</a> •
+  <a href="#-technology-stack">Tech Stack</a> •
+  <a href="#-project-structure">Structure</a> •
+  <a href="#-team">Team</a> •
+  <a href="#-future-scope">Future Scope</a>
+</p>
 
+---
 
+## 📌 About The Project
 
-This is a release of [MySQL Workbench](https://mysqlworkbench.org), a graphical tool for working with MySQL servers and databases.
+**Student Performance Prediction & Early Warning System** is an AI-based academic support platform designed to help identify students who may be at risk of poor academic performance.
 
+The system analyzes relevant student data, applies machine learning techniques, predicts academic performance, and provides an **early warning mechanism** for students who may require additional academic support.
 
+### 🎯 Main Goal
 
-![Home screen on Windows](https://dev.mysql.com/doc/workbench/en/images/wb-home-screen-new.png)
+> **Predict → Analyze → Identify Risk → Take Early Action**
 
+The goal is to provide educators with useful insights that can help them take timely action and support students before their academic performance declines significantly.
 
+---
 
-License information can be found in the [License](License.txt) file.
+## ✨ Features
 
+- 📊 **Student Performance Prediction**
+- 🤖 **Machine Learning-based Analysis**
+- 🚨 **Early Warning System**
+- 📈 **Performance Visualization**
+- 👨‍🎓 **Student Data Management**
+- 🗄️ **Database Integration**
+- ⚡ **Fast API-based Backend**
+- 🌐 **Interactive React Frontend**
+- 📋 **Academic Performance Reports**
+- 🔍 **Risk Identification & Analysis**
 
+---
 
-This distribution may include materials developed by third parties.
+## 🧠 How The System Works
 
-For license and attribution notices for these materials, please refer to the [License](License.txt) file.
-
-
-
-For more information on MySQL Workbench, visit
-
-[http://dev.mysql.com/doc/workbench/en](http://dev.mysql.com/doc/workbench/en)
-
-
-
-For additional downloads and the source of MySQL Workbench, visit
-
-[http://dev.mysql.com/downloads](http://dev.mysql.com/downloads)
-
-
-
-MySQL Workbench is brought to you by the MySQL team at Oracle.
-
-
-
-# Overview
-
-
-
-[MySQL Workbench](https://mysqlworkbench.org) is a graphical tool for working with MySQL servers and databases. MySQL Workbench fully supports MySQL server versions 5.6 and higher.
-
-
-
-MySQL Workbench functionality covers five main topics:
-
-
-
-* **SQL Development:** Enables you to create and manage connections to database servers. Along with enabling you to configure connection parameters, MySQL Workbench provides the capability to execute SQL queries on the database connections using the built-in SQL Editor.
-
-
-
-* **Data Modeling (Design):** Enables you to create models of your database schema graphically, reverse and forward engineer between a schema and a live database, and edit all aspects of your database using the comprehensive Table Editor. The Table Editor provides easy-to-use facilities for editing Tables, Columns, Indexes, Triggers, Partitioning, Options, Inserts and Privileges, Routines and Views.
-
-
-
-* **Server Administration:** Enables you to administer MySQL server instances by administering users, performing backup and recovery, inspecting audit data, viewing database health, and monitoring the MySQL server performance.
-
-
-
-* **Data Migration:** Allows you to migrate from Microsoft SQL Server, Microsoft Access, Sybase ASE, SQLite, SQL Anywhere, PostreSQL, and other RDBMS tables, objects and data to MySQL. Migration also supports migrating from earlier versions of MySQL to the latest releases.
-
-
-
-* **MySQL Enterprise Support:** Support for Enterprise products such as MySQL Enterprise Backup, MySQL Firewall, and MySQL Audit.
-
-
-
-![Performance dashboard](https://dev.mysql.com/doc/workbench/en/images/wb-performance-dashboard.png)
-
-
-
-The [code repository on Github](https://github.com/mysql/mysql-workbench) is where we publish a snapshot of our internal repository everytime a new release of the product is published. Use the [MySQL bug system](http://bugs.mysql.com/) to report any issue you have. You can use Github or the MySQL bug system to contribute to the development. File a pull request on Github or a new issue on the MySQL Bug system with your patch and we will take care of it. 
-
+```text
+        👨‍🎓 Student Data
+              │
+              ▼
+      ┌─────────────────┐
+      │ Data Processing │
+      └────────┬────────┘
+               │
+               ▼
+      ┌─────────────────┐
+      │ Machine Learning│
+      │     Model       │
+      └────────┬────────┘
+               │
+        ┌──────┴──────┐
+        ▼             ▼
+   📈 Performance   🚨 Risk
+     Prediction    Detection
+        │             │
+        └──────┬──────┘
+               ▼
+      ┌─────────────────┐
+      │   Dashboard     │
+      │  & Analytics    │
+      └────────┬────────┘
+               │
+               ▼
+        👨‍🏫 Early Action
